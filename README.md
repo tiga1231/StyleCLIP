@@ -1,4 +1,27 @@
-# StyleCLIP: Text-Driven Manipulation of StyleGAN Imagery (ICCV 2021 Oral)
+# Changes in this fork:
+- Auto-reformat
+- Changed some default arguments
+- Manually downloaded some pre-trained models
+    - StyleGAN2 weights: https://drive.google.com/file/d/1EM87UquaoQmk17Q8d5kYIAHqu0dkYqdT
+    - ArcFace weights: https://drive.google.com/file/d/1N0MZSqPRJpLfP4mFQCS14ikrVSe8vQlL
+- Used PYTHONPATH hack for running scripts in subdirectory 
+which has top-level imports, e.g.,
+    - ```export PYTHONPATH=.; python optimization/run_optimization.py```
+
+%% - Made it a package:
+%%     - Added setup.py
+%%     - pip install -e .
+
+
+
+
+
+
+
+
+
+
+# A fork of StyleCLIP: Text-Driven Manipulation of StyleGAN Imagery (ICCV 2021 Oral)
 
 [Run this model on Replicate](https://replicate.ai/orpatashnik/styleclip)
 

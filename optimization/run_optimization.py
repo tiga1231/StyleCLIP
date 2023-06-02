@@ -12,7 +12,15 @@ from criteria.id_loss import IDLoss
 from mapper.training.train_utils import STYLESPACE_DIMENSIONS
 from models.stylegan2.model import Generator
 import clip
+
+# # sys path hack for parent-directory import:
+# import os, sys, inspect
+# currentdir = os.path.dirname(os.path.abspath(
+#     inspect.getfile(inspect.currentframe())))
+# parentdir = os.path.dirname(currentdir)
+# sys.path.insert(0, parentdir)
 from utils import ensure_checkpoint_exists
+
 
 STYLESPACE_INDICES_WITHOUT_TORGB = [
     i
@@ -133,7 +141,7 @@ def main(args):
                 )
 
             torchvision.utils.save_image(
-                img_gen, f"results/{str(i).zfill(5)}.jpg", normalize=True, range=(-1, 1)
+                img_gen, f"{args.results_dir}/{str(i).zfill(5)}.jpg", normalize=True, range=(-1, 1)
             )
 
     if args.mode == "edit":
@@ -144,7 +152,7 @@ def main(args):
     return final_result
 
 
-if __name__ == "__main__":
+def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--description",
@@ -155,7 +163,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--ckpt",
         type=str,
-        default="../pretrained_models/stylegan2-ffhq-config-f.pt",
+        default="./pretrained_models/stylegan2-ffhq-config-f.pt",
         help="pretrained StyleGAN2 weights",
     )
     parser.add_argument(
@@ -200,8 +208,7 @@ if __name__ == "__main__":
         help="used only for the initial latent vector, and only when a latent code path is"
         "not provided",
     )
-    parser.add_argument("--work_in_stylespace",
-                        default=False, action="store_true")
+    parser.add_argument("--work_in_stylespace", default=False, action="store_true")
     parser.add_argument(
         "--save_intermediate_image_every",
         type=int,
@@ -211,11 +218,15 @@ if __name__ == "__main__":
     parser.add_argument("--results_dir", type=str, default="results")
     parser.add_argument(
         "--ir_se50_weights",
-        default="../pretrained_models/model_ir_se50.pth",
+        default="./pretrained_models/model_ir_se50.pth",
         type=str,
         help="Path to facial recognition network used in ID loss",
     )
+    return parser
 
+
+if __name__ == "__main__":
+    parser = get_parser()
     args = parser.parse_args()
 
     result_image = main(args)

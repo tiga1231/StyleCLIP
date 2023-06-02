@@ -2,3 +2,7 @@
 /latents/
 /results/
 /mine/
+
+__pycache__
+pretrained_models/
+static/
