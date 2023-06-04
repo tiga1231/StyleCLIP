@@ -69,11 +69,15 @@ def process_prompt():
     print(f"Processing prompt '{prompt}'...")
     parser = get_parser()
     args = parser.parse_args()
-    args.mode = mode
+
     args.description = prompt
-    args.save_intermediate_image_every = 10
-    args.step = step
+    args.id_lambda = 0
+    args.l2_lambda = 0.006  # default=0.008
+    args.mode = mode
     args.results_dir = "static"
+    args.save_intermediate_image_every = 0
+    args.step = step
+
     result_image = main(args)
     print(result_image.shape)
 
