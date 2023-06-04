@@ -1,23 +1,14 @@
-# from torch import nn
-# import torch
-# from torch import optim
-import torchvision
-import torch
-
-from PIL import Image
 from base64 import b64encode
 from io import BytesIO
 
-from flask import Flask
-from flask import request, jsonify
+import numpy as np
+import torch
+import torchvision
+from flask import Flask, jsonify, request
 from flask_cors import CORS
+from PIL import Image
+
 from optimization.run_optimization import get_parser, main
-
-# import numpy as np
-# import pandas as pd
-# from base64 import b64encode
-# from tqdm import tqdm
-
 
 # create Flask app
 app = Flask(__name__)
