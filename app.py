@@ -49,26 +49,28 @@ def numpy2base64(x):
 
 @app.route("/process_prompt", methods=["POST"])
 def process_prompt():
+    # Get user request data
     req = request.json
+    print("request:", req)
     prompt = req.get("prompt", "a woman in red hair")
     mode = req.get("mode", "edit")
     step = req.get("step", 30)
-
-    # StyleCLIP process
-    print("request:", req)
-
+    id_lambda = req.get("id_lambda", 0.0)
+    l2_lambda = req.get("l2_lambda", 0.008)
     print(f"Processing prompt '{prompt}'...")
+
+    # set args
     parser = get_parser()
     args = parser.parse_args()
-
-    args.description = prompt
-    args.id_lambda = 0
-    args.l2_lambda = 0.006  # default=0.008
-    args.mode = mode
     args.results_dir = "static"
     args.save_intermediate_image_every = 0
+    args.description = prompt
+    args.id_lambda = id_lambda
+    args.l2_lambda = l2_lambda
+    args.mode = mode
     args.step = step
 
+    # StyleCLIP main process
     result_image = main(args)
     print(result_image.shape)
 
