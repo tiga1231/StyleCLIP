@@ -10,6 +10,7 @@ from PIL import Image
 
 from optimization.run_optimization import get_parser
 from optimization.run_optimization import main as find_directions
+from optimization.run_optimization import load_generator
 
 # create Flask app
 app = Flask(__name__)
@@ -51,19 +52,57 @@ def encode_numpy_img(array):
     return string
 
 
-@app.route("/get_weighted_images", methods=["POST"])
+# globals
+g_ema = load_generator()
+
+
+@app.route("/get_weighted_images", methods=["GET", "POST"])
 def get_weighted_images():
-    req = request.get_json()
-    code_index = req["code_index"]
-    direction_indices = req["direction_indices"]
-    weights = req["weights"]
-    weights = torch.tensor(weights, dtype=torch.float32, device=device)
+    global g_ema
+    if request.method == 'GET':  # testing only
+        latent = torch.load('static/test_output/latent-code0.pth')
 
-    # (lazy) load latent edits from file
-    # combine latent codes based on weights
-    # generate image(s)
+    else:
+        req = request.get_json()
+        code_index = req["code_index"]
+        direction_indices = req["direction_indices"]
+        weights = req["weights"]
+        weights = torch.tensor(
+            weights,
+            dtype=torch.float32,
+        )
+        print(weights)
 
-    image_strings = []  # TODO
+        # (lazy) load latent edits from file
+        w0 = torch.load(f'static/test_output/latent-code{code_index}.pth',
+                        map_location='cpu')
+        # latent = w0
+        w1 = [
+            torch.load(
+                f'static/test_output/latent-code{code_index}-edit{di}.pth',
+                map_location='cpu') for di in direction_indices
+        ]
+        w1 = torch.cat(w1, 0)
+        latent = (weights @ w1.view(-1, 18 * 512)).view(-1, 18, 512)
+        print(latent.shape)
+        # combine latent codes based on weights
+        # generate image(s)
+        # image_strings = []  # TODO
+
+    latent = latent.to(device)
+    img_gen, _ = g_ema(
+        [latent],
+        input_is_latent=True,
+        randomize_noise=False,
+        input_is_stylespace=False,
+    )
+    print(img_gen.shape)
+    # torch tensor to numpy
+    img_gen = img_gen.detach_().cpu()  # [2,3,1024,1024]
+    img_gen = to_rgb(img_gen)
+    img_gen = img_gen.permute(0, 2, 3, 1).numpy()
+    image_strings = [encode_numpy_img(img_gen[0])]
+
     return jsonify(dict(images=image_strings))
 
 

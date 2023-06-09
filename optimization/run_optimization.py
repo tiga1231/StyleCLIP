@@ -105,6 +105,7 @@ def find_edit(g_ema, args):
 
     pbar = tqdm(range(args.step))
 
+    img_gen = None
     for i in pbar:
         t = i / args.step
         lr = get_lr(t, args.lr)
@@ -171,20 +172,22 @@ def find_edit(g_ema, args):
     )
 
 
-def main(args):
-    """
-    1. Load generator model
-    2. Learn latent code based on prompt
-    """
-    ensure_checkpoint_exists(args.ckpt)
-    os.makedirs(args.results_dir, exist_ok=True)
-
-    # initialize generator model
-    g_ema = Generator(args.stylegan_size, 512, 8)
-    g_ema.load_state_dict(torch.load(args.ckpt)["g_ema"], strict=False)
+def load_generator(ckpt="./pretrained_models/stylegan2-ffhq-config-f.pt",
+                   stylegan_size=1024):
+    g_ema = Generator(stylegan_size, 512, 8)
+    g_ema.load_state_dict(torch.load(ckpt)["g_ema"], strict=False)
     g_ema.eval()
     g_ema = g_ema.cuda()
+    return g_ema
 
+
+def main(args):
+    # 1. Load generator model
+    ensure_checkpoint_exists(args.ckpt)
+    os.makedirs(args.results_dir, exist_ok=True)
+    g_ema = load_generator(args.ckpt, args.stylegan_size)
+
+    # 2. Learn latent code based on prompt
     result = find_edit(g_ema, args)
     return result
 
@@ -236,7 +239,8 @@ def get_parser():
         "--latent_path",
         type=str,
         default=None,
-        help="starts the optimization from the given latent code if provided. Otherwose, starts from"
+        help=
+        "starts the optimization from the given latent code if provided. Otherwose, starts from"
         "the mean latent in a free generation, and from a random one in editing. "
         "Expects a .pt format",
     )
@@ -244,7 +248,8 @@ def get_parser():
         "--truncation",
         type=float,
         default=0.7,
-        help="used only for the initial latent vector, and only when a latent code path is"
+        help=
+        "used only for the initial latent vector, and only when a latent code path is"
         "not provided",
     )
     parser.add_argument("--work_in_stylespace",
