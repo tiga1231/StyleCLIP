@@ -40,6 +40,7 @@ def numpy2base64(x):
         a src string encoding image in base64
         ready for <img src='data:image/png;base64,'+src>
     """
+
     pil_img = Image.fromarray(x)
     buff = BytesIO()
     pil_img.save(buff, format="PNG")
