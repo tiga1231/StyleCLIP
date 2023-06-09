@@ -31,18 +31,23 @@ if __name__ == '__main__':
     args = parser.parse_args()
     args.save_intermediate_image_every = 0
     args.id_lambda = 0.001
-    args.l2_lambda = 0.008
+    args.l2_lambda = 0.005
     args.mode = 'edit'
-    args.step = 100  # TODO increase me to ~100 in real experiment
+    args.step = 100
     args.work_in_stylespace = False
 
     # args for this experiment
     latent_seeds = range(20)
     prompts = [
-        'long nose',
-        'short nose',
+        'blue eyes',
+        'brown eyes',
+        'grey eyes',
+        'red eyes',
+        'green eyes',
         'big eyes',
         'closed eyes',
+        'long nose',
+        'short nose',
         'old',
         'young',
         'red hair',
