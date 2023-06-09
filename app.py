@@ -1,14 +1,15 @@
 from base64 import b64encode
 from io import BytesIO
 
-import numpy as np
+# import numpy as np
 import torch
-import torchvision
+# import torchvision
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from PIL import Image
 
-from optimization.run_optimization import get_parser, main
+from optimization.run_optimization import get_parser
+from optimization.run_optimization import main as find_directions
 
 # create Flask app
 app = Flask(__name__)
@@ -39,7 +40,6 @@ def numpy2base64(x):
         a src string encoding image in base64
         ready for <img src='data:image/png;base64,'+src>
     """
-    print("x.shape", x.shape)
     pil_img = Image.fromarray(x)
     buff = BytesIO()
     pil_img.save(buff, format="PNG")
@@ -57,6 +57,8 @@ def process_prompt():
     step = req.get("step", 30)
     id_lambda = req.get("id_lambda", 0.0)
     l2_lambda = req.get("l2_lambda", 0.008)
+    latent_seed = req.get("latent_seed", 0)
+    work_in_stylespace = req.get("work_in_stylespace", False)
     print(f"Processing prompt '{prompt}'...")
 
     # set args
@@ -67,12 +69,14 @@ def process_prompt():
     args.description = prompt
     args.id_lambda = id_lambda
     args.l2_lambda = l2_lambda
+    args.latent_seed = latent_seed
     args.mode = mode
     args.step = step
+    args.work_in_stylespace = work_in_stylespace
 
     # StyleCLIP main process
-    result_image = main(args)
-    print(result_image.shape)
+    result = find_directions(args)
+    result_image = result.get("final_result")  # [2,3,1024,1024]
 
     # # Optionally, save image on disk
     # torchvision.utils.save_image(
@@ -87,13 +91,11 @@ def process_prompt():
     result_image = result_image.detach_().cpu()  # [2,3,1024,1024]
     result_image = to_rgb(result_image)
     result_image_np = result_image.permute(0, 2, 3, 1).numpy()
-    print(result_image_np.shape)
     return jsonify(
         dict(
             prompt=prompt,
             images=[numpy2base64(img_np) for img_np in result_image_np],
-        )
-    )
+        ))
 
 
 if __name__ == "__main__":
