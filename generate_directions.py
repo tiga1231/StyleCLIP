@@ -1,10 +1,13 @@
 from base64 import b64encode
 from io import BytesIO
+from pathlib import Path
+import os
+import json
 
 from tqdm import tqdm
 # import numpy as np
 import torch
-# import torchvision
+import torchvision
 from PIL import Image
 
 from optimization.run_optimization import get_parser
@@ -12,24 +15,35 @@ from optimization.run_optimization import find_edit
 from utils import ensure_checkpoint_exists
 from models.stylegan2.model import Generator
 
+
+def write(obj, filename):
+    dir = Path(filename).parent
+    if not dir.exists():
+        os.makedirs(dir)
+    with open(filename, 'w') as f:
+        json.dump(obj, f)
+
+
 if __name__ == '__main__':
 
-    prompts = [
-        'red hair',
-        'blue hair',
-    ]
-    latent_seeds = [1]
-
-    # set args
+    # set up constant, default args
     parser = get_parser()
     args = parser.parse_args()
-    args.results_dir = "static"
     args.save_intermediate_image_every = 0
-    args.id_lambda = 0.0
+    args.id_lambda = 0.001
     args.l2_lambda = 0.008
     args.mode = 'edit'
-    args.step = 3
+    args.step = 100  # TODO increase me to ~100 in real experiment
     args.work_in_stylespace = False
+
+    # args for this experiment
+    latent_seeds = range(1)
+    prompts = [
+        'closed eyes',
+        'old',
+        'sunglasses',
+    ]
+    args.results_dir = "static/test_output"
 
     # load StyleGAN model
     ensure_checkpoint_exists(args.ckpt)
@@ -38,16 +52,36 @@ if __name__ == '__main__':
     g_ema.eval()
     g_ema = g_ema.cuda()
 
-    for seed in tqdm(latent_seeds):
-        for prompt in prompts:
-
+    write(prompts, f'{args.results_dir}/prompts.json')
+    for i, seed in enumerate(latent_seeds):
+        args.latent_seed = seed
+        print(f'Latent seed {i}/{len(latent_seeds)}: "{seed}"')
+        for j, prompt in enumerate(prompts):
             args.description = prompt
-            args.latent_seed = seed
+            print(f'Prompt {j}/{len(prompts)}: "{prompt}"')
 
             # StyleCLIP main process
             result = find_edit(g_ema, args)
-            for k, v in result.items():
-                print(f'"{k}": shape={list(v.shape)}')
+            # for k, v in result.items():
+            #     print(f'"{k}": shape={list(v.shape)}')
 
-    # result_image = result.get("final_result")  # [2,3,1024,1024]
-    # result_direction = result.get("latent_direction")  # [2,3,1024,1024]
+            # grab the StyleCLIP result
+            result_image = result.get("final_result")  # [2,3,1024,1024]
+            latent = result.get("latent")
+            latent_code_init = result.get("latent_code_init")
+
+            # Save latent code and the edited latent code, shape=[1,18,512]
+            if j == 0:
+                torch.save(latent_code_init,
+                           f"{args.results_dir}/latent-code{i}.pth")
+            torch.save(
+                latent, f"{args.results_dir}/latent-code{i}-edit{j}.pth")
+
+            # Optionally, save images on disk for inspection
+            torchvision.utils.save_image(
+                result_image.detach_().cpu(),
+                f"{args.results_dir}/final_result-code{i}-edit{j}.jpg",
+                normalize=True,
+                scale_each=True,
+                range=(-1, 1),
+            )

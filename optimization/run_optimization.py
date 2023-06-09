@@ -61,8 +61,12 @@ def find_edit(g_ema, args):
     if args.latent_path:
         latent_code_init = torch.load(args.latent_path).cuda()
     elif args.mode == "edit":
-        torch.manual_seed(args.latent_seed)
-        latent_code_init_not_trunc = torch.randn(1, 512).cuda()
+        if args.latent_code is not None:
+            latent_code_init_not_trunc = args.latent_code
+        elif args.latent_seed is not None:
+            torch.manual_seed(args.latent_seed)
+            latent_code_init_not_trunc = torch.randn(1, 512).cuda()
+
         with torch.no_grad():
             _, latent_code_init, _ = g_ema(
                 [latent_code_init_not_trunc],
@@ -259,13 +263,24 @@ def get_parser():
         type=str,
         help="Path to facial recognition network used in ID loss",
     )
+
+    # new arguments from StyleCLIP's orignal arg list:
+
     parser.add_argument(
         "--latent_seed",
         type=int,
         default=int(time()),
-        help="seed for generating random latent codes with shape [1,1,512]"
+        help="seed for generating random latent codes with shape [1,512]"
         "which is later repeated to [1,18,512]",
     )
+
+    parser.add_argument(
+        "--latent_code",
+        default=None,
+        help="A [1,512] PyTorch Tensor supplied as latent code"
+        "which is later repeated to [1,18,512]",
+    )
+
     return parser
 
 
