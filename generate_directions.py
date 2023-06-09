@@ -21,7 +21,7 @@ def write(obj, filename):
     if not dir.exists():
         os.makedirs(dir)
     with open(filename, 'w') as f:
-        json.dump(obj, f)
+        json.dump(obj, f, indent=2)
 
 
 if __name__ == '__main__':
@@ -94,7 +94,7 @@ if __name__ == '__main__':
             # Optionally, save images on disk for inspection
             torchvision.utils.save_image(
                 result_image.detach_().cpu(),
-                f"{args.results_dir}/final_result-code{i}-edit{j}.jpg",
+                f"{args.results_dir}/code{i}-edit{j}-{'_'.join(prompt.split())}.jpg",
                 normalize=True,
                 scale_each=True,
                 range=(-1, 1),
