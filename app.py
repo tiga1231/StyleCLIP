@@ -27,7 +27,11 @@ def to_rgb(img):
     return (img * 127.5 + 128).clamp(0, 255).to(torch.uint8).cpu()
 
 
-def numpy2base64(x):
+def encode_numpy(array):
+    return b64encode(array.tobytes()).decode()
+
+
+def encode_numpy_img(array):
     """
     Convert numpy array to base64 string that is ready for html image src
     Parameters
@@ -40,12 +44,27 @@ def numpy2base64(x):
         a src string encoding image in base64
         ready for <img src='data:image/png;base64,'+src>
     """
-
-    pil_img = Image.fromarray(x)
+    pil_img = Image.fromarray(array)
     buff = BytesIO()
     pil_img.save(buff, format="PNG")
     string = b64encode(buff.getvalue()).decode("utf-8")
     return string
+
+
+@app.route("/get_weighted_images", methods=["POST"])
+def get_weighted_images():
+    req = request.get_json()
+    code_index = req["code_index"]
+    direction_indices = req["direction_indices"]
+    weights = req["weights"]
+    weights = torch.tensor(weights, dtype=torch.float32, device=device)
+
+    # (lazy) load latent edits from file
+    # combine latent codes based on weights
+    # generate image(s)
+
+    image_strings = []  # TODO
+    return jsonify(dict(images=image_strings))
 
 
 @app.route("/process_prompt", methods=["POST"])
@@ -95,7 +114,7 @@ def process_prompt():
     return jsonify(
         dict(
             prompt=prompt,
-            images=[numpy2base64(img_np) for img_np in result_image_np],
+            images=[encode_numpy_img(img_np) for img_np in result_image_np],
         ))
 
 

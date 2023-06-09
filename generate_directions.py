@@ -37,10 +37,20 @@ if __name__ == '__main__':
     args.work_in_stylespace = False
 
     # args for this experiment
-    latent_seeds = range(1)
+    latent_seeds = range(20)
     prompts = [
+        'long nose',
+        'short nose',
+        'big eyes',
         'closed eyes',
         'old',
+        'young',
+        'red hair',
+        'blue hair',
+        'yellow hair',
+        'short hair',
+        'curly hair',
+        'eyeglasses',
         'sunglasses',
     ]
     args.results_dir = "static/test_output"
@@ -74,8 +84,7 @@ if __name__ == '__main__':
             if j == 0:
                 torch.save(latent_code_init,
                            f"{args.results_dir}/latent-code{i}.pth")
-            torch.save(
-                latent, f"{args.results_dir}/latent-code{i}-edit{j}.pth")
+            torch.save(latent, f"{args.results_dir}/latent-code{i}-edit{j}.pth")
 
             # Optionally, save images on disk for inspection
             torchvision.utils.save_image(
